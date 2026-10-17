@@ -12,7 +12,30 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function LiveCanvasEditor({ frameUrl, campaignTitle, onDownloadStart, onDownloadSuccess }) {
+// Shared canvas draw helpers
+function drawPhoto(ctx, photo, panX, panY, zoom) {
+  ctx.save();
+  ctx.translate(540 + panX, 540 + panY);
+  ctx.scale(zoom, zoom);
+  ctx.drawImage(photo, -photo.width / 2, -photo.height / 2);
+  ctx.restore();
+}
+
+function drawWatermark(ctx) {
+  ctx.save();
+  ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('myStory', 972, 972);
+  ctx.restore();
+}
+
+export default function LiveCanvasEditor({ frameUrl, campaignTitle, onDownloadSuccess }) {
   const [photo, setPhoto] = useState(null); // Loaded HTMLImageElement
   const [photoName, setPhotoName] = useState('');
   
@@ -74,41 +97,16 @@ export default function LiveCanvasEditor({ frameUrl, campaignTitle, onDownloadSt
     reader.readAsDataURL(file);
   };
 
-  // Re-draw Canvas Loop (Preview)
+  // Re-draw preview canvas
   const drawCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas || !photo) return;
-
     const ctx = canvas.getContext('2d');
-    
-    // Clear logical canvas area (1080x1080)
     ctx.clearRect(0, 0, 1080, 1080);
-    
-    // 1. Draw solid background to support transparent photo borders
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, 1080, 1080);
-
-    // 2. Draw participant photo centered with transforms
-    ctx.save();
-    // Move origin to center of canvas, translate, apply scale
-    ctx.translate(540 + panX, 540 + panY);
-    ctx.scale(zoom, zoom);
-    // Draw centered relative to translated coordinate
-    ctx.drawImage(photo, -photo.width / 2, -photo.height / 2);
-    ctx.restore();
-
-    // 3. Render watermark text "myStory" at the bottom right corner with 10% padding (x: 972, y: 972)
-    ctx.save();
-    ctx.font = "bold 28px system-ui, -apple-system, sans-serif";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "bottom";
-    ctx.fillText("myStory", 972, 972);
-    ctx.restore();
+    drawPhoto(ctx, photo, panX, panY, zoom);
+    drawWatermark(ctx);
   };
 
   // Redraw when transform states modify
@@ -158,72 +156,38 @@ export default function LiveCanvasEditor({ frameUrl, campaignTitle, onDownloadSt
     logger.debug('CanvasEditor', 'Transforms reset');
   };
 
-  // Composite both photo and preloaded static PNG frame to an isolated offscreen canvas to avoid flickering
-  const handleDownload = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !photo || !frameLoaded) return;
-
+  const handleDownload = () => {
+    if (!photo || !frameLoaded) return;
     setDownloading(true);
-    if (onDownloadStart) onDownloadStart();
-    logger.info('CanvasEditor', 'Generating final 1080x1080px composite JPEG in offscreen canvas...');
 
-    // Wait a brief tick to ensure canvas redraws smoothly
     setTimeout(() => {
       try {
-        // Create an isolated offscreen canvas to prevent visible screen flashing or race conditions during export
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = 1080;
         exportCanvas.height = 1080;
         const exportCtx = exportCanvas.getContext('2d');
 
-        // 1. Draw solid background
         exportCtx.fillStyle = '#ffffff';
         exportCtx.fillRect(0, 0, 1080, 1080);
+        drawPhoto(exportCtx, photo, panX, panY, zoom);
 
-        // 2. Draw photo layer matching identical logical viewport transformations
-        exportCtx.save();
-        exportCtx.translate(540 + panX, 540 + panY);
-        exportCtx.scale(zoom, zoom);
-        exportCtx.drawImage(photo, -photo.width / 2, -photo.height / 2);
-        exportCtx.restore();
-
-        // 3. Composite preloaded frame PNG overlay exactly on top spanning 1080x1080
         const frameImg = frameImgRef.current;
-        if (frameImg) {
-          exportCtx.drawImage(frameImg, 0, 0, 1080, 1080);
-        }
+        if (frameImg) exportCtx.drawImage(frameImg, 0, 0, 1080, 1080);
 
-        // Add text watermark "myStory" to final composite export
-        exportCtx.save();
-        exportCtx.font = "bold 28px system-ui, -apple-system, sans-serif";
-        exportCtx.shadowColor = "rgba(0, 0, 0, 0.6)";
-        exportCtx.shadowBlur = 6;
-        exportCtx.shadowOffsetX = 2;
-        exportCtx.shadowOffsetY = 2;
-        exportCtx.fillStyle = "rgba(255, 255, 255, 0.7)";
-        exportCtx.textAlign = "right";
-        exportCtx.textBaseline = "bottom";
-        exportCtx.fillText("myStory", 972, 972);
-        exportCtx.restore();
+        drawWatermark(exportCtx);
 
-        // Export as JPEG (92% quality is standard industry balance of file-size vs crispness)
         const dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
-        
-        // Trigger download programmatically
-        const downloadLink = document.createElement('a');
-        const fileName = `${campaignTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')}_mystory.jpg`;
-        downloadLink.download = fileName;
-        downloadLink.href = dataUrl;
-        
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+        const link = document.createElement('a');
+        link.download = `${campaignTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')}_mystory.jpg`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        logger.info('CanvasEditor', 'Composite image downloaded successfully', fileName);
         if (onDownloadSuccess) onDownloadSuccess();
       } catch (err) {
-        logger.error('CanvasEditor', 'Compositing and download failed', err);
-        alert('Browser security blocked image compilation due to cross-origin configurations. Please try a different browser or frame.');
+        logger.error('CanvasEditor', 'Export failed', err);
+        alert('Download failed. Please try a different browser or frame.');
       } finally {
         setDownloading(false);
       }
