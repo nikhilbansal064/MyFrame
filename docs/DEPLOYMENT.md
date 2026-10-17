@@ -1,122 +1,88 @@
-# DevOps & Production Deployment Guide: My Story
+# Deployment Guide — My Story
 
-Follow these steps to deploy **"My Story"** into a live, production-grade cloud environment.
+## Pre-Deployment Checklist
 
----
-
-## Deployment Steps Roadmap
-
-```
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│ 1. Supabase Setup│ ──> │2. Google Auth API│ ──> │3. Vercel Frontend│
-│ (Tables & Storage│     │ (OAuth Client ID)│     │(Env Vars & Build)│
-└──────────────────┘     └──────────────────┘     └──────────────────┘
-```
+- [ ] Supabase cloud project created
+- [ ] All SQL migrations run on the cloud database
+- [ ] Google OAuth credentials configured in Google Cloud Console
+- [ ] Custom domain purchased (optional)
+- [ ] All environment variables set in Vercel
+- [ ] Production build passes locally: `npm run build`
 
 ---
 
-## 1. Database & Cloud Backend (Supabase)
+## Step 1 — Supabase Cloud Setup
 
-### 1.1 Create the Supabase Project
-1. Log in to the [Supabase Dashboard](https://supabase.com).
-2. Click **New Project** and select your organization.
-3. Configure project details:
-   * **Database Name**: `My Story Production` (or similar).
-   * **Password**: Generate a secure password and save it in a safe vault.
-   * **Region**: Choose the region closest to your target audience (e.g. `us-east-1` or `ap-south-1`).
-   * **Pricing**: Select the **Free Tier**.
-4. Click **Create New Project**. It will take ~2 minutes for provision setup to finish.
-
-### 1.2 Run Schema Migrations
-1. In your Supabase project, navigate to **SQL Editor** in the left-hand sidebar menu.
-2. Click **New Query** → **New blank query**.
-3. Open [supabase/migrations/20260530000000_init.sql](file:///Users/nikhil.agarwal/Projects/my_story_web_app/supabase/migrations/20260530000000_init.sql) in your local editor.
-4. Copy the entire file contents, paste them into the Supabase SQL editor, and click **Run**.
-5. Verify that the SQL executes successfully. This creates:
-   * Tables: `organisers`, `campaigns`, `participants`.
-   * Views: `campaign_daily_stats`, `campaign_device_stats`.
-   * Triggers: Sync function `public.handle_new_user()` mapped to auth sign-ups.
-   * Policies: Row-Level Security (RLS) configurations.
-
-### 1.3 Verify Bucket Configuration
-1. Go to **Storage** (bucket icon in the left menu).
-2. Verify that the bucket named `campaign-frames` exists and is marked as **Public**.
-3. Confirm that the storage security policies are active:
-   * Public read access to all files.
-   * Write/edit access restricted to authenticated owners under the `/frames/USER_ID/` path prefix.
+1. Go to [supabase.com](https://supabase.com) → **New Project**
+2. After creation, open **Settings → API** and note:
+   - **Project URL** (e.g. `https://your-project-ref.supabase.co`)
+   - **Anon / public key**
+3. Open the **SQL Editor** and paste the full contents of:
+   ```
+   supabase/migrations/20260530000000_init.sql
+   ```
+   Run the query to apply all schema migrations.
+4. Enable Google OAuth:
+   - **Authentication → Providers → Google**
+   - Enter the **Client ID** and **Client Secret** from Google Cloud Console
+   - Set the redirect URL to: `https://yourdomain.com/auth/callback`
+5. Create the storage bucket:
+   - **Storage → New Bucket** → name it `campaign-frames`
+   - Enable **public access** for reads (organisers need authenticated write access only)
 
 ---
 
-## 2. Authentication Configuration (Google OAuth)
+## Step 2 — Vercel Deployment
 
-### 2.1 Google Developer Console Setup
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a **New Project** (e.g., `my-story-prod`).
-3. Set up the **OAuth Consent Screen**:
-   * Choose **External** user type and click Create.
-   * Fill out the app name (`My Story`), user support email, and developer email.
-   * Under Scopes, select `email` and `profile`.
-4. Create **Credentials**:
-   * Click **Create Credentials** → **OAuth client ID**.
-   * **Application type**: select **Web application**.
-   * **Name**: `My Story Production`.
+1. Push the repository to GitHub
+2. Go to [vercel.com](https://vercel.com) → **New Project** → Import your GitHub repository
+3. Framework will be auto-detected as **Next.js** — no manual configuration needed
+4. Under **Environment Variables**, add:
 
-### 2.2 Link Authorized Redirect URIs
-1. In your Supabase dashboard, navigate to **Authentication** (key icon) → **Providers** → **Google**.
-2. Locate the **Redirect URI** shown at the top of the Google provider card. It will look like:
-   `https://[project-ref].supabase.co/auth/v1/callback`
-3. Copy this URL.
-4. In the Google Cloud Console, under **Authorized redirect URIs**, paste the URL and click **Create**.
-5. Copy the generated **Client ID** and **Client Secret**.
+   | Variable | Value |
+   |----------|-------|
+   | `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project-ref.supabase.co` |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `your-production-anon-key` |
+   | `NEXT_PUBLIC_SITE_URL` | `https://yourdomain.com` |
 
-### 2.3 Configure Supabase Auth Provider
-1. Return to Supabase → **Authentication** → **Providers** → **Google**.
-2. Toggle Google login to **Enabled**.
-3. Paste the **Client ID** and **Client Secret** copied from the Google Console.
-4. Click **Save**.
+5. Click **Deploy** — Vercel handles the build, CDN distribution, and HTTPS automatically.
 
 ---
 
-## 3. Frontend Web Hosting (Vercel)
+## Domain Configuration
 
-### 3.1 Push Code to GitHub
-Ensure all code (including our new documents) is committed and pushed:
-```bash
-git init
-git add .
-git commit -m "docs: added PM, architecture, and devops documentation"
-# Push to your remote repository (e.g. GitHub)
-```
+Vercel automatically provides a free `*.vercel.app` subdomain on every deploy.
 
-### 3.2 Import Project to Vercel
-1. Log in to [Vercel](https://vercel.com).
-2. Click **Add New** → **Project**.
-3. Select your repository and click **Import**.
+**To use a custom domain:**
 
-### 3.3 Set Environment Variables
-In Vercel's project configuration, expand the **Environment Variables** section and add the following keys. You can retrieve these from your Supabase Dashboard under **Project Settings** → **API**:
-
-| Env Key | Example Value | Description |
-| :--- | :--- | :--- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://x.supabase.co` | Your Supabase Project API URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI...` | Your Supabase API Public Anon Key |
-| `NEXT_PUBLIC_SITE_URL` | `https://your-domain.com` | Production URL (needed for Google OAuth redirects) |
-
-### 3.4 Deploy
-1. Click **Deploy**.
-2. Vercel will clone, build (which we verified successfully builds), and deploy your site.
-3. Once completed, copy the production URL (e.g. `https://my-story.vercel.app`).
+1. Purchase a domain from a registrar (Namecheap, GoDaddy, Google Domains, etc.)
+   > Vercel does **not** sell or register domains.
+2. In Vercel: **Project Settings → Domains → Add your domain**
+3. Update your DNS records at your registrar:
+   - **`www` subdomain:** Add a `CNAME` record pointing to `cname.vercel-dns.com`
+   - **Apex domain (`@`):** Add an `A` record pointing to Vercel's IP (shown in the Vercel dashboard)
+4. Wait for DNS propagation (usually under 30 minutes)
 
 ---
 
-## 4. Production Smoke Test Checklist
+## Step 3 — Post-Deployment Verification
 
-Once the deployment finishes, complete this smoke test:
+Work through these checks after every production deployment:
 
-| Test Step | Action | Expected Result |
-| :--- | :--- | :--- |
-| **1. Auth Redirect** | Click "Sign In with Google" | OAuth popup displays; logs in and redirects back to dashboard. |
-| **2. Table Sync** | Check Supabase SQL Editor | Run `select * from public.organisers`. Confirm profile was automatically created. |
-| **3. Asset Upload** | Create a campaign & upload PNG | Upload success. Check Supabase Storage bucket `campaign-frames` for the file. |
-| **4. Participant Canvas** | Open campaign URL, upload photo, crop, and download | Canvas renders photo underneath transparent frame; downloads high-res JPEG. |
-| **5. Metrics Tracking** | Refresh Organizer Dashboard | Stats counters increment; Chart.js trend lines plot views and downloads correctly. |
+1. **Landing page** — Visit the production URL; the landing page loads without errors
+2. **Google Sign-In** — Complete the OAuth flow; confirm redirect back to `/dashboard` with a valid session
+3. **Campaign creation** — Create a campaign; verify it appears in the Supabase `campaigns` table
+4. **Participant page** — Visit `/c/[slug]`; confirm the page loads with correct OpenGraph metadata (`<title>`, `<og:image>`, etc.)
+5. **Canvas & export** — Upload a photo, adjust position, click download; confirm a 1080×1080px JPEG is saved with the `myStory` watermark in the bottom-right corner
+6. **Analytics** — Confirm the analytics dashboard reflects the view event logged during step 4
+
+---
+
+## Platform Limits & Notes
+
+| Platform | Free Tier Limits |
+|----------|-----------------|
+| **Vercel** | Sufficient for launch; no bandwidth restrictions on hobby tier for typical campaign traffic |
+| **Supabase** | 500 MB database storage, 1 GB file storage, 50,000 monthly active users |
+
+**Developer Bypass mode** is effectively disabled in production. It only activates when Supabase is unreachable — which will not happen when the cloud project is live and correctly configured.
