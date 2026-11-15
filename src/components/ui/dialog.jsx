@@ -98,26 +98,41 @@ export const DialogClose = React.forwardRef(({ children, asChild = false, ...pro
 });
 DialogClose.displayName = "DialogClose";
 
-export const DialogContent = React.forwardRef(({ className = "", children, ...props }, ref) => {
+export const DialogContent = React.forwardRef(({ className = "", flush = false, children, ...props }, ref) => {
   const { open, setOpen } = React.useContext(DialogContext);
+
+  // Lock page scroll while the modal is open
+  React.useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      {/* Backdrop Click */}
-      <div className="fixed inset-0" onClick={() => setOpen(false)} />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-fade-in"
+        onClick={() => setOpen(false)}
+      />
 
       {/* Modal Container */}
       <div
         ref={ref}
-        className={`relative w-full max-w-lg bg-neutral-900 border border-white/8 shadow-2xl rounded-3xl p-6 sm:p-8 flex flex-col gap-6 animate-in zoom-in-95 duration-200 glass-panel ${className}`}
+        role="dialog"
+        aria-modal="true"
+        className={`relative w-full ${className.includes("max-w-") ? "" : "max-w-lg"} max-h-[92vh] overflow-y-auto bg-neutral-950 border border-white/10 shadow-2xl shadow-black/60 rounded-t-3xl sm:rounded-2xl flex flex-col animate-scale-in ${flush ? "" : "p-6 sm:p-8 gap-6"} ${className}`}
         {...props}
       >
         {/* Close Button */}
         <button
+          type="button"
+          aria-label="Close"
           onClick={() => setOpen(false)}
-          className="absolute top-4 right-4 p-2 border border-white/5 hover:border-white/10 bg-white/5 hover:bg-white/10 rounded-xl text-neutral-400 hover:text-white transition-all cursor-pointer z-50"
+          className="absolute top-4 right-4 inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer z-10"
         >
           <X className="w-4 h-4" />
         </button>
@@ -131,7 +146,7 @@ DialogContent.displayName = "DialogContent";
 
 export const DialogHeader = ({ className = "", ...props }) => (
   <div
-    className={`flex flex-col space-y-1.5 text-center sm:text-left ${className}`}
+    className={`flex flex-col gap-1.5 ${className}`}
     {...props}
   />
 );
@@ -139,7 +154,7 @@ DialogHeader.displayName = "DialogHeader";
 
 export const DialogFooter = ({ className = "", ...props }) => (
   <div
-    className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 ${className}`}
+    className={`flex flex-col-reverse sm:flex-row sm:justify-end gap-3 ${className}`}
     {...props}
   />
 );
@@ -148,7 +163,7 @@ DialogFooter.displayName = "DialogFooter";
 export const DialogTitle = React.forwardRef(({ className = "", ...props }, ref) => (
   <h2
     ref={ref}
-    className={`text-xl font-bold tracking-tight text-white ${className}`}
+    className={`text-lg font-semibold tracking-tight text-white ${className}`}
     {...props}
   />
 ));
@@ -157,7 +172,7 @@ DialogTitle.displayName = "DialogTitle";
 export const DialogDescription = React.forwardRef(({ className = "", ...props }, ref) => (
   <p
     ref={ref}
-    className={`text-sm text-neutral-400 ${className}`}
+    className={`text-sm text-neutral-400 leading-relaxed ${className}`}
     {...props}
   />
 ));

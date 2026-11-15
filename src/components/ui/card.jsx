@@ -12,7 +12,7 @@ Card.displayName = "Card";
 export const CardHeader = React.forwardRef(({ className = "", ...props }, ref) => (
   <div
     ref={ref}
-    className={`flex flex-col space-y-1.5 p-6 border-b border-white/5 ${className}`}
+    className={`flex flex-col gap-1 p-6 ${className}`}
     {...props}
   />
 ));
@@ -21,7 +21,7 @@ CardHeader.displayName = "CardHeader";
 export const CardTitle = React.forwardRef(({ className = "", ...props }, ref) => (
   <h3
     ref={ref}
-    className={`text-lg font-bold tracking-tight text-white ${className}`}
+    className={`text-base font-semibold tracking-tight text-white ${className}`}
     {...props}
   />
 ));
@@ -30,17 +30,17 @@ CardTitle.displayName = "CardTitle";
 export const CardDescription = React.forwardRef(({ className = "", ...props }, ref) => (
   <p
     ref={ref}
-    className={`text-sm text-neutral-400 ${className}`}
+    className={`text-sm text-neutral-400 leading-relaxed ${className}`}
     {...props}
   />
 ));
 CardDescription.displayName = "CardDescription";
 
 export const CardContent = React.forwardRef(({ className = "", ...props }, ref) => (
-  <div 
-    ref={ref} 
-    className={`p-6 ${className}`} 
-    {...props} 
+  <div
+    ref={ref}
+    className={`p-6 pt-0 ${className}`}
+    {...props}
   />
 ));
 CardContent.displayName = "CardContent";

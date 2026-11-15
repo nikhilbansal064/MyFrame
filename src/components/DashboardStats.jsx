@@ -16,7 +16,7 @@ import {
 } from 'chart.js';
 import { logger } from '@/lib/logger';
 import { Eye, Download, TrendingUp, Monitor } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 
 // Register Chart.js components
 ChartJS.register(
@@ -30,6 +30,14 @@ ChartJS.register(
   Legend,
   Filler
 );
+
+function EmptyChart({ children }) {
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.08] text-sm text-neutral-500 text-center px-6">
+      {children}
+    </div>
+  );
+}
 
 export default function DashboardStats({ events, campaignsList = [] }) {
   
@@ -102,6 +110,8 @@ export default function DashboardStats({ events, campaignsList = [] }) {
           backgroundColor: 'rgba(168, 85, 247, 0.08)',
           borderWidth: 2,
           tension: 0.35,
+          pointRadius: 3,
+          pointHoverRadius: 5,
           pointBackgroundColor: 'rgba(168, 85, 247, 1)'
         },
         {
@@ -112,6 +122,8 @@ export default function DashboardStats({ events, campaignsList = [] }) {
           backgroundColor: 'rgba(217, 70, 239, 0.08)',
           borderWidth: 2,
           tension: 0.35,
+          pointRadius: 3,
+          pointHoverRadius: 5,
           pointBackgroundColor: 'rgba(217, 70, 239, 1)'
         }
       ]
@@ -184,142 +196,142 @@ export default function DashboardStats({ events, campaignsList = [] }) {
     maintainAspectRatio: false,
     plugins: {
       legend: {
+        align: 'end',
         labels: {
           color: '#a3a3a3',
-          font: { weight: '600', size: 11 }
+          boxWidth: 8,
+          boxHeight: 8,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 16,
+          font: { weight: '500', size: 12 }
         }
       },
       tooltip: {
-        backgroundColor: '#171717',
-        borderColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: '#0a0a0a',
+        borderColor: 'rgba(255,255,255,0.1)',
         borderWidth: 1,
+        padding: 10,
+        cornerRadius: 8,
         titleColor: '#ffffff',
-        bodyColor: '#a3a3a3'
+        bodyColor: '#d4d4d4'
       }
     },
     scales: {
       x: {
-        grid: { color: 'rgba(255, 255, 255, 0.03)' },
-        ticks: { color: '#737373', font: { size: 10 } }
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: '#737373', font: { size: 11 } }
       },
       y: {
-        grid: { color: 'rgba(255, 255, 255, 0.03)' },
-        ticks: { color: '#737373', font: { size: 10 }, stepSize: 1 }
+        beginAtZero: true,
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        border: { display: false },
+        ticks: { color: '#737373', font: { size: 11 }, precision: 0, padding: 8 }
       }
     }
   };
 
+  const summaryTiles = [
+    { label: 'Total Views', value: summary.views.toLocaleString(), icon: Eye, tone: 'text-sky-300 bg-sky-500/10' },
+    { label: 'Total Downloads', value: summary.downloads.toLocaleString(), icon: Download, tone: 'text-emerald-300 bg-emerald-500/10' },
+    { label: 'Conversion Ratio', value: `${summary.conversion}%`, icon: TrendingUp, tone: 'text-pink-300 bg-pink-500/10' },
+  ];
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4 sm:gap-6">
       
       {/* 1. Quick Stats Counters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <Card className="p-6 rounded-2xl flex items-center justify-between border border-white/5">
-          <div className="flex flex-col gap-1">
-            <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Total Views</span>
-            <span className="text-3xl font-black text-white">{summary.views.toLocaleString()}</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-500/5 border border-purple-500/10 flex items-center justify-center text-purple-400">
-            <Eye className="w-6 h-6" />
-          </div>
-        </Card>
-
-        <Card className="p-6 rounded-2xl flex items-center justify-between border border-white/5">
-          <div className="flex flex-col gap-1">
-            <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Total Downloads</span>
-            <span className="text-3xl font-black text-emerald-400">{summary.downloads.toLocaleString()}</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-emerald-400">
-            <Download className="w-6 h-6" />
-          </div>
-        </Card>
-
-        <Card className="p-6 rounded-2xl flex items-center justify-between border border-white/5">
-          <div className="flex flex-col gap-1">
-            <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Conversion Ratio</span>
-            <span className="text-3xl font-black text-pink-400">{summary.conversion}%</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-pink-500/5 border border-pink-500/10 flex items-center justify-center text-pink-400">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        {summaryTiles.map(({ label, value, icon: Icon, tone }) => (
+          <Card key={label} className="p-5 flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <span className="eyebrow">{label}</span>
+              <span className="text-3xl font-semibold tracking-tight text-white tabular-nums">{value}</span>
+            </div>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tone}`}>
+              <Icon className="w-5 h-5" />
+            </div>
+          </Card>
+        ))}
       </div>
 
       {/* 2. Visual Graphs Matrix */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         
         {/* Trend Lines Chart */}
-        <Card className="lg:col-span-2 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
-          <CardHeader className="p-0 border-0 flex flex-col gap-0.5">
-            <CardTitle className="font-bold text-white text-sm tracking-wide">Daily Conversion Trends</CardTitle>
-            <CardDescription className="text-neutral-500 text-xxs">Telemetry metrics logs for views and downloads compiled over the last 7 days</CardDescription>
-          </CardHeader>
-          <CardContent className="h-64 relative w-full p-0">
+        <Card className="lg:col-span-2 p-5 sm:p-6 flex flex-col gap-5">
+          <div className="flex flex-col gap-1">
+            <CardTitle>Daily Trends</CardTitle>
+            <CardDescription>Views and downloads over the last 7 days</CardDescription>
+          </div>
+          <div className="h-64 relative w-full">
             {events.length > 0 ? (
               <Line data={lineChartData} options={chartOptions} />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs text-neutral-600">
-                No activity logs recorded to compile trends.
-              </div>
+              <EmptyChart>
+                <TrendingUp className="w-5 h-5 text-neutral-600" />
+                No activity recorded yet.
+              </EmptyChart>
             )}
-          </CardContent>
+          </div>
         </Card>
 
         {/* Device Distribution Chart */}
-        <Card className="p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
-          <CardHeader className="p-0 border-0 flex flex-col gap-0.5">
-            <CardTitle className="font-bold text-white text-sm tracking-wide flex items-center gap-1.5">
-              <Monitor className="w-4 h-4 text-purple-400" />
-              <span>Devices Categories</span>
+        <Card className="p-5 sm:p-6 flex flex-col gap-5">
+          <div className="flex flex-col gap-1">
+            <CardTitle className="flex items-center gap-2">
+              <Monitor className="w-4 h-4 text-purple-300" />
+              <span>Devices</span>
             </CardTitle>
-            <CardDescription className="text-neutral-500 text-xxs">Participant device agent parameters parsed dynamically</CardDescription>
-          </CardHeader>
-          <CardContent className="h-64 relative w-full p-0">
+            <CardDescription>Participant device types</CardDescription>
+          </div>
+          <div className="h-64 relative w-full">
             {events.length > 0 ? (
-              <Bar data={deviceChartData} options={chartOptions} />
+              <Bar data={deviceChartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, legend: { display: false } } }} />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs text-neutral-600">
-                No telemetry data to compile device models.
-              </div>
+              <EmptyChart>
+                <Monitor className="w-5 h-5 text-neutral-600" />
+                No device data yet.
+              </EmptyChart>
             )}
-          </CardContent>
+          </div>
         </Card>
 
       </div>
 
       {/* 3. Locale Breakdown Table */}
       {events.length > 0 && topLocales.length > 0 && (
-        <Card className="p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
-          <CardHeader className="p-0 border-0 flex flex-col gap-0.5">
-            <CardTitle className="font-bold text-white text-sm tracking-wide">Top User Locales</CardTitle>
-            <CardDescription className="text-neutral-500 text-xxs">Demographics based on browser timezone settings and language configurations</CardDescription>
-          </CardHeader>
+        <Card className="p-5 sm:p-6 flex flex-col gap-5">
+          <div className="flex flex-col gap-1">
+            <CardTitle>Top Locales</CardTitle>
+            <CardDescription>Based on browser language and timezone settings</CardDescription>
+          </div>
           
-          <CardContent className="flex flex-col gap-3 p-0">
+          <div className="flex flex-col gap-4">
             {topLocales.map((loc, idx) => (
-              <div key={loc.locale} className="flex flex-col gap-1.5">
-                <div className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xxs text-neutral-400">
+              <div key={loc.locale} className="flex flex-col gap-2">
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-md bg-white/[0.06] flex items-center justify-center text-xs font-medium text-neutral-400 tabular-nums">
                       {idx + 1}
                     </span>
-                    <span className="font-mono text-neutral-300 font-semibold">{loc.locale}</span>
+                    <span className="font-mono text-neutral-200">{loc.locale}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-neutral-400">
-                    <span className="font-bold text-white">{loc.count}</span>
+                  <div className="flex items-center gap-2 text-neutral-500 tabular-nums">
+                    <span className="font-semibold text-white">{loc.count}</span>
                     <span>({loc.percent}%)</span>
                   </div>
                 </div>
-                {/* Visual Progress Bar */}
-                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" 
+                    className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full" 
                     style={{ width: `${loc.percent}%` }}
                   ></div>
                 </div>
               </div>
             ))}
-          </CardContent>
+          </div>
         </Card>
       )}
 

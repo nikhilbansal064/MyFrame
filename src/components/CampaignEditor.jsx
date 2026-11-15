@@ -4,19 +4,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
-import { 
-  UploadCloud, 
-  Calendar, 
-  Sparkles, 
-  Globe, 
-  Lock, 
-  FileImage,
-  Image as ImageIcon
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input, Textarea } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Field, FrameDropzone, DateRangeFields, VisibilityToggle } from '@/components/CampaignFormFields';
 
 // Helper: Format ISO string dates for datetime-local value input
 const formatDateTime = (dateStr) => {
@@ -186,208 +177,102 @@ export default function CampaignEditor({ campaign, onClose, onUpdate }) {
 
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh] p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/8 bg-neutral-900">
+      <DialogContent flush className="max-w-2xl">
         
         {/* Header */}
-        <DialogHeader className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Sparkles className="w-4.5 h-4.5 text-purple-400" />
-            </div>
-            <DialogTitle className="text-xl font-bold text-white tracking-tight">Edit Campaign</DialogTitle>
-          </div>
+        <DialogHeader className="pl-6 pr-14 sm:pl-8 pt-6 sm:pt-7 pb-5 border-b border-white/[0.06]">
+          <DialogTitle>Edit Campaign</DialogTitle>
+          <DialogDescription className="font-mono text-xs">/c/{campaign.slug}</DialogDescription>
         </DialogHeader>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="flex flex-col gap-6 px-6 sm:px-8 py-6">
           
-          {/* Section 1: Frame File Uploader */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
-              1. Transparent Frame Overlay (PNG ONLY - Leave unchanged to keep current)
-            </Label>
-            
-            <div 
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-2xl p-6 transition-all flex flex-col items-center justify-center text-center gap-3 cursor-pointer ${
-                dragOver 
-                  ? 'border-purple-500 bg-purple-500/5' 
-                  : frameFile 
-                    ? 'border-purple-500/30 bg-neutral-950/40' 
-                    : 'border-white/10 hover:border-purple-500/30 bg-white/5 hover:bg-white/10'
-              }`}
-            >
-              <input 
-                type="file" 
-                accept="image/png" 
-                onChange={(e) => handleFileChange(e.target.files[0])}
-                className="hidden" 
-                id="edit-frame-file-input"
+            {/* Frame File Uploader */}
+            <Field label="Frame overlay (transparent PNG)">
+              <FrameDropzone
+                inputId="edit-frame-file-input"
+                framePreview={framePreview}
+                frameFile={frameFile}
+                dragOver={dragOver}
+                onFile={handleFileChange}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                hint="Must be a transparent PNG."
+                existingLabel="Using current frame overlay"
               />
-              
-              <label htmlFor="edit-frame-file-input" className="w-full h-full flex flex-col items-center justify-center gap-3 cursor-pointer">
-                {framePreview ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="relative w-36 h-36 border border-white/10 bg-neutral-950 rounded-xl overflow-hidden flex items-center justify-center shadow-lg p-2">
-                      <img 
-                        src={framePreview} 
-                        alt="PNG Frame Overlay Preview" 
-                        className="max-h-full max-w-full object-contain pointer-events-none"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-neutral-400">
-                      {frameFile ? (
-                        <>
-                          <FileImage className="w-3.5 h-3.5 text-purple-400" />
-                          <span className="truncate max-w-[200px] font-semibold">{frameFile.name}</span>
-                          <span className="text-[10px] text-neutral-500 font-mono">({(frameFile.size / 1024).toFixed(0)} KB)</span>
-                        </>
-                      ) : (
-                        <>
-                          <ImageIcon className="w-3.5 h-3.5 text-purple-400" />
-                          <span className="font-semibold text-neutral-500">Using existing frame overlay</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/5 border border-purple-500/10 flex items-center justify-center text-purple-400 animate-pulse">
-                      <UploadCloud className="w-6 h-6" />
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-sm font-bold text-white">Click or drag & drop PNG frame</p>
-                      <p className="text-xxs text-neutral-500">Overlay MUST be a transparent PNG file</p>
-                    </div>
-                  </>
-                )}
-              </label>
-            </div>
-          </div>
+            </Field>
 
-          {/* Section 2: Metadata */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
-              Campaign Title
-            </Label>
-            <Input 
-              type="text" 
-              required
-              maxLength={80}
-              placeholder="e.g. Earth Day 2026"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white"
-            />
-          </div>
+            {/* Title */}
+            <Field label="Campaign Title" htmlFor="edit-title">
+              <Input 
+                id="edit-title"
+                name="title"
+                type="text" 
+                required
+                maxLength={80}
+                placeholder="e.g. Earth Day 2026"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </Field>
 
-          {/* Description */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
-              Campaign Description
-            </Label>
-            <textarea 
-              rows={2}
-              maxLength={300}
-              placeholder="Provide a brief explanation for your supporters."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-neutral-950 border border-white/8 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 resize-none"
-            />
-          </div>
+            {/* Description */}
+            <Field label="Campaign Description" htmlFor="edit-description">
+              <Textarea 
+                id="edit-description"
+                name="description"
+                rows={3}
+                maxLength={300}
+                placeholder="Tell your supporters what this is about."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Field>
 
-          {/* Section 3: Scheduling & Visibility */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/5 pt-5">
             {/* Scheduling */}
-            <div className="flex flex-col gap-4">
-              <Label className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                <span>Scheduling Windows</span>
-              </Label>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5 border border-white/5 bg-white/5 rounded-xl px-3.5 py-2.5">
-                  <span className="text-[10px] font-bold text-neutral-400 uppercase">Go-Live Time</span>
-                  <input 
-                    type="datetime-local" 
-                    required
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-transparent border-0 rounded-none p-0 text-xs text-white focus:outline-none font-mono cursor-pointer"
-                  />
-                </div>
-                
-                <div className="flex flex-col gap-1.5 border border-white/5 bg-white/5 rounded-xl px-3.5 py-2.5">
-                  <span className="text-[10px] font-bold text-neutral-400 uppercase">Expiry Time</span>
-                  <input 
-                    type="datetime-local" 
-                    required
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full bg-transparent border-0 rounded-none p-0 text-xs text-white focus:outline-none font-mono cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
+            <DateRangeFields
+              startDate={startDate}
+              endDate={endDate}
+              onStartChange={setStartDate}
+              onEndChange={setEndDate}
+            />
 
             {/* Visibility */}
-            <div className="flex flex-col gap-4 md:pl-6 md:border-l border-white/5">
-              <Label className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
-                {isPublic ? <Globe className="w-3.5 h-3.5 text-purple-400" /> : <Lock className="w-3.5 h-3.5 text-neutral-500" />}
-                <span>Profile & Search Visibility</span>
-              </Label>
-              
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
-                  <span className="text-xs font-semibold text-neutral-300">
-                    {isPublic ? 'Publicly Listed' : 'Private (Hidden)'}
-                  </span>
-                  
-                  <button 
-                    type="button"
-                    onClick={() => setIsPublic(!isPublic)}
-                    className={`w-11 h-6 rounded-full transition-all duration-300 p-0.5 cursor-pointer ${isPublic ? 'bg-purple-500' : 'bg-neutral-800'}`}
-                  >
-                    <div className={`w-5 h-5 rounded-full bg-white shadow transition-all duration-300 ${isPublic ? 'translate-x-5' : 'translate-x-0'}`}></div>
-                  </button>
-                </div>
-                <p className="text-[10px] text-neutral-500 leading-relaxed">
-                  {isPublic 
-                    ? 'Anyone can view this campaign on your organiser profile directory.' 
-                    : 'The campaign page is hidden from directories. Direct link only.'}
-                </p>
-              </div>
-            </div>
+            <VisibilityToggle
+              isPublic={isPublic}
+              onToggle={() => setIsPublic(!isPublic)}
+              publicHint="Anyone can find this campaign on your organiser profile."
+              privateHint="Hidden from directories. Only people with the link can join."
+            />
           </div>
 
           {/* Action Row */}
-          <div className="flex items-center justify-end gap-3 border-t border-white/5 pt-5 mt-2">
+          <DialogFooter className="sticky bottom-0 px-6 sm:px-8 py-4 border-t border-white/[0.06] bg-neutral-950/95 backdrop-blur">
             <Button 
               type="button" 
               disabled={submitting}
               onClick={onClose}
               variant="secondary"
-              className="px-5 py-3 font-bold text-sm text-neutral-300"
             >
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={submitting}
-              className="px-6 py-3 font-bold text-sm text-white btn-premium"
             >
               {submitting ? (
                 <>
-                  <span className="w-4 h-4 rounded-full border-2 border-purple-200/30 border-t-white animate-spin"></span>
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
                   <span>Saving...</span>
                 </>
               ) : (
                 'Save Changes'
               )}
             </Button>
-          </div>
+          </DialogFooter>
 
         </form>
 

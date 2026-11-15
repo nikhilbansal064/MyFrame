@@ -66,9 +66,9 @@ export default async function CampaignPage({ params }) {
   
   if (!supabaseServer) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6 bg-background text-foreground">
-        <h1 className="text-xl font-bold text-white">Database Configuration Error</h1>
-        <p className="text-xs text-neutral-500 max-w-sm mt-1">Supabase connection keys are not configured on the Next.js server. Please check your variables.</p>
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6 gap-2 bg-background text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Database Configuration Error</h1>
+        <p className="text-sm text-neutral-400 max-w-sm leading-relaxed">Supabase connection keys are not configured on the Next.js server. Please check your variables.</p>
       </div>
     );
   }
