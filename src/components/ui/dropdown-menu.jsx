@@ -77,7 +77,7 @@ export const DropdownMenuContent = React.forwardRef(({ className = "", children,
   return (
     <div
       ref={ref}
-      className={`absolute ${alignClass} mt-2 w-56 rounded-xl border border-white/8 bg-neutral-950 p-1 text-white shadow-2xl focus:outline-none z-50 glass-panel animate-in fade-in zoom-in-95 duration-100 ${className}`}
+      className={`absolute ${alignClass} mt-2 w-56 rounded-xl border border-white/10 bg-neutral-950 p-1 text-white shadow-2xl shadow-black/60 focus:outline-none z-50 animate-scale-in ${className}`}
       {...props}
     >
       {children}
@@ -99,7 +99,7 @@ export const DropdownMenuItem = React.forwardRef(({ className = "", children, on
       ref={ref}
       type="button"
       onClick={handleClick}
-      className={`flex w-full items-center rounded-lg px-3 py-2 text-sm text-neutral-300 hover:text-white hover:bg-white/5 transition-all text-left font-semibold cursor-pointer ${className}`}
+      className={`flex w-full items-center rounded-lg gap-2 px-3 py-2 text-sm text-neutral-300 hover:text-white hover:bg-white/[0.06] transition-colors text-left font-medium cursor-pointer ${className}`}
       {...props}
     >
       {children}

@@ -50,6 +50,11 @@ if [ -d ".next" ] && [ "${1:-}" == "--clean" ]; then
     rm -rf .next
     echo -e "${GREEN}✓ Next.js build cache purged.${RESET}"
 fi
+if [ -d "node_modules/.cache" ] && [ "${1:-}" == "--clean" ]; then
+    echo -e "${YELLOW}🧹 Cleaning node_modules cache...${RESET}"
+    rm -rf node_modules/.cache
+    echo -e "${GREEN}✓ node_modules cache purged.${RESET}"
+fi
 
 # 5. Starting next dev server
 echo -e "\n${BOLD}${GREEN}🌐 Next.js Turbopack development server is booting...${RESET}"

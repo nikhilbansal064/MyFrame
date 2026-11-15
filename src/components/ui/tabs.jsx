@@ -31,7 +31,7 @@ export const Tabs = ({ defaultValue, value, onValueChange, className = "", child
 export const TabsList = React.forwardRef(({ className = "", ...props }, ref) => (
   <div
     ref={ref}
-    className={`inline-flex items-center justify-center rounded-xl bg-neutral-950 p-1 border border-white/5 ${className}`}
+    className={`inline-flex items-center justify-center gap-1 rounded-xl bg-white/[0.03] p-1 border border-white/[0.08] ${className}`}
     {...props}
   />
 ));
@@ -46,10 +46,10 @@ export const TabsTrigger = React.forwardRef(({ value, className = "", ...props }
       ref={ref}
       type="button"
       onClick={() => onValueChange(value)}
-      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer ${
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer ${
         isActive
-          ? "bg-gradient-to-r from-purple-500/20 to-indigo-600/20 text-purple-300 border border-purple-500/30"
-          : "text-neutral-400 hover:text-neutral-200 hover:bg-white/5 border border-transparent"
+          ? "bg-white/10 text-white shadow-sm"
+          : "text-neutral-400 hover:text-neutral-200"
       } ${className}`}
       {...props}
     />
@@ -65,7 +65,7 @@ export const TabsContent = React.forwardRef(({ value, className = "", children, 
   return (
     <div
       ref={ref}
-      className={`mt-4 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 animate-in fade-in duration-300 ${className}`}
+      className={`mt-4 focus-visible:outline-none animate-fade-in ${className}`}
       {...props}
     >
       {children}

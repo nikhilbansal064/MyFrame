@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import LiveCanvasEditor from './LiveCanvasEditor';
 import { logger } from '@/lib/logger';
-import { Sparkles, Heart, Share2, Info, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Heart, Share2, Info, AlertTriangle, ArrowRight } from 'lucide-react';
+import BrandLogo from '@/components/BrandLogo';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function CampaignParticipantClient({ campaign: initialCampaign }) {
   const router = useRouter();
@@ -100,18 +101,15 @@ export default function CampaignParticipantClient({ campaign: initialCampaign })
 
   if (!campaign) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground text-center px-6 gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-neutral-800 border border-white/5 flex items-center justify-center text-neutral-400">
-          <Info className="w-8 h-8" />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground text-center px-6 gap-6">
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.06] ring-1 ring-inset ring-white/10 flex items-center justify-center text-neutral-300">
+          <Info className="w-6 h-6" />
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-white">Campaign Not Found</h1>
-          <p className="text-xs text-neutral-500 max-w-xs mt-1">This campaign link is invalid or has been archived by the organiser.</p>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Campaign Not Found</h1>
+          <p className="text-sm text-neutral-400 max-w-xs leading-relaxed">This campaign link is invalid or has been archived by the organiser.</p>
         </div>
-        <Button 
-          onClick={() => router.push('/')}
-          className="px-6 py-2.5 rounded-xl font-bold text-xs"
-        >
+        <Button onClick={() => router.push('/')}>
           Create Your Own Campaign
         </Button>
       </div>
@@ -121,49 +119,46 @@ export default function CampaignParticipantClient({ campaign: initialCampaign })
   const isPaused = !campaign.is_active;
   const isInactive = isPaused || isExpired || isScheduled;
 
+  const steps = [
+    { title: 'Upload Selfie', body: 'Pick any image or take a quick photo on your phone.' },
+    { title: 'Align & Scale', body: 'Drag to position and use the slider to fit the frame.' },
+    { title: 'Download & Share', body: 'Save a high-res JPEG and post it anywhere.' },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       
-      {/* Dynamic Header */}
-      <header className="sticky top-0 z-50 w-full glass-panel border-b border-white/5 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-500 to-pink-600 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white animate-pulse" />
-            </div>
-            <span className="text-sm font-bold text-white">My Story</span>
-          </div>
-          
-          <span className="text-xs text-neutral-400 font-semibold truncate max-w-[150px] sm:max-w-[250px]" title={campaign.title}>
+      {/* Header */}
+      <header className="sticky top-0 z-40 w-full app-header">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <BrandLogo />
+          <span className="text-sm text-neutral-400 font-medium truncate max-w-[50%]" title={campaign.title}>
             {campaign.title}
           </span>
         </div>
       </header>
 
       {/* Main Layout Grid */}
-      <main className="flex-1 w-full py-10 lg:py-16 flex items-center">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+      <main className="flex-1 w-full py-8 sm:py-12 lg:py-16">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
         
         {/* Left Column: Interactive Canvas Editor Workspace */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center w-full">
+        <div className="lg:col-span-6 flex flex-col items-center w-full">
           {isInactive ? (
             /* Inactive Campaign Lockscreen Overlay */
-            <Card className="w-full aspect-square max-w-[500px] border border-dashed border-white/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-5">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                <AlertTriangle className="w-6 h-6 animate-pulse" />
+            <Card className="w-full aspect-square max-w-[500px] border-dashed border-white/10 p-8 flex flex-col items-center justify-center text-center gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 ring-1 ring-inset ring-amber-500/25 flex items-center justify-center text-amber-300">
+                <AlertTriangle className="w-5 h-5" />
               </div>
-              <div>
-                <CardTitle className="text-lg font-bold text-white">Campaign Inactive</CardTitle>
-                <CardDescription className="text-neutral-500 text-xs mt-1.5 leading-relaxed max-w-xs mx-auto">
+              <div className="flex flex-col gap-2">
+                <CardTitle className="text-lg">Campaign Inactive</CardTitle>
+                <CardDescription className="max-w-xs mx-auto">
                   {isPaused && 'This campaign has been temporarily paused by the organiser.'}
                   {isScheduled && `This campaign is scheduled and will go live on ${new Date(campaign.start_date).toLocaleString()}.`}
                   {isExpired && 'This campaign has ended. The expiry window set by the organiser has passed.'}
                 </CardDescription>
               </div>
-              <Button 
-                onClick={() => router.push('/')}
-                className="px-6 py-2.5 rounded-xl font-bold text-xs"
-              >
+              <Button onClick={() => router.push('/')}>
                 Create Your Own Campaign
               </Button>
             </Card>
@@ -178,66 +173,58 @@ export default function CampaignParticipantClient({ campaign: initialCampaign })
         </div>
 
         {/* Right Column: Campaign details & share loop */}
-        <div className="lg:col-span-6 flex flex-col items-start gap-6 lg:pl-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xxs font-bold border border-purple-500/20 bg-purple-500/5 text-purple-400">
-            <Heart className="w-3.5 h-3.5 fill-purple-400/20 text-purple-400" />
-            <span>Join Branded Photo Campaign</span>
-          </div>
+        <div className="lg:col-span-6 flex flex-col items-start gap-8 lg:pt-4">
+          <div className="flex flex-col items-start gap-5">
+            <div className="inline-flex items-center gap-2 h-7 px-3 rounded-full text-xs font-medium border border-purple-500/25 bg-purple-500/10 text-purple-200">
+              <Heart className="w-3.5 h-3.5 fill-purple-400/30 text-purple-300" />
+              <span>Join Branded Photo Campaign</span>
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-black text-white tracking-tight leading-none sm:text-4xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-white tracking-tight leading-[1.1] text-balance">
               {campaign.title}
             </h1>
-            <p className="text-neutral-400 text-sm leading-relaxed mt-2">
+            <p className="text-neutral-400 text-base leading-relaxed max-w-xl">
               {campaign.description || 'Add your profile photo to our official branded overlay frame. Support us by downloading and sharing your branded photo on social media!'}
             </p>
           </div>
 
-          {/* Dynamic Helper Guidance Cards */}
-          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-white/5 pt-6">
-            <Card className="p-4 rounded-xl border border-white/5 flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/5 border border-purple-500/10 flex items-center justify-center text-purple-400 font-bold shrink-0">
-                1
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <h4 className="text-xs font-bold text-white">Upload Selfie</h4>
-                <p className="text-xxs text-neutral-500">Pick any image or take a quick mobile photo.</p>
-              </div>
-            </Card>
-
-            <Card className="p-4 rounded-xl border border-white/5 flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/5 border border-purple-500/10 flex items-center justify-center text-purple-400 font-bold shrink-0">
-                2
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <h4 className="text-xs font-bold text-white">Align & Scale</h4>
-                <p className="text-xxs text-neutral-500">Drag to pan and use slider to fit perfectly inside boundaries.</p>
-              </div>
-            </Card>
-          </div>
+          {/* Steps */}
+          <ol className="w-full grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-3">
+            {steps.map((step, idx) => (
+              <li key={step.title} className="glass-panel rounded-xl p-4 flex gap-3 items-start">
+                <span className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-300 text-sm font-semibold flex items-center justify-center shrink-0 tabular-nums">
+                  {idx + 1}
+                </span>
+                <div className="flex flex-col gap-1">
+                  <h4 className="text-sm font-medium text-white">{step.title}</h4>
+                  <p className="text-xs text-neutral-500 leading-relaxed">{step.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
 
           {/* Social share suggestion row */}
           {downloadCount > 0 && (
-            <div className="w-full p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 animate-in fade-in slide-in-from-bottom duration-300 flex items-start gap-3">
+            <div className="w-full p-4 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] animate-slide-up flex items-start gap-3">
               <Share2 className="w-5 h-5 shrink-0 text-emerald-400" />
-              <div className="flex flex-col gap-0.5">
-                <h4 className="text-xs font-bold text-white">Downloaded Successfully!</h4>
-                <p className="text-xxs text-neutral-500 leading-relaxed">
-                  Share it on **Instagram, WhatsApp, X (Twitter), or Facebook** with the campaign hashtag to spread the reach!
+              <div className="flex flex-col gap-1">
+                <h4 className="text-sm font-medium text-white">Downloaded successfully!</h4>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  Share it on <span className="text-neutral-200 font-medium">Instagram, WhatsApp, X or Facebook</span> with the campaign hashtag to spread the word.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Quick Footer redirection */}
-          <div className="w-full flex items-center justify-between border-t border-white/5 pt-6 mt-2 text-xxs text-neutral-500">
+          {/* Footer redirection */}
+          <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-sm text-neutral-500">
             <span>Powered by My Story</span>
             <button 
               onClick={() => router.push('/')}
-              className="hover:text-purple-400 flex items-center gap-1 font-semibold cursor-pointer"
+              className="text-neutral-300 hover:text-white flex items-center gap-1.5 font-medium cursor-pointer transition-colors"
             >
-              Launch Your Own Frame Campaign
-              <ArrowRight className="w-2.5 h-2.5 text-purple-400" />
+              Launch your own frame campaign
+              <ArrowRight className="w-3.5 h-3.5 text-purple-300" />
             </button>
           </div>
         </div>

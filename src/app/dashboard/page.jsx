@@ -23,8 +23,10 @@ import {
   ToggleRight,
   TrendingUp,
   Terminal,
-  Edit
+  Edit,
+  Check
 } from 'lucide-react';
+import GoogleIcon from '@/components/GoogleIcon';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { PageContainer } from '@/components/ui/PageContainer';
@@ -37,6 +39,7 @@ export default function Dashboard() {
   const [loadingCampaigns, setLoadingCampaigns] = useState(true);
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
+  const [copiedSlug, setCopiedSlug] = useState(null);
   const [stats, setStats] = useState({
     activeCount: 0,
     totalViews: 0,
@@ -268,7 +271,8 @@ export default function Dashboard() {
   const handleCopyLink = (slug) => {
     const shareUrl = `${window.location.origin}/c/${slug}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
-      alert('Share link successfully copied to clipboard!');
+      setCopiedSlug(slug);
+      setTimeout(() => setCopiedSlug(current => (current === slug ? null : current)), 1800);
     }).catch(err => {
       logger.error('Dashboard', 'Failed copying link', err);
     });
@@ -281,82 +285,67 @@ export default function Dashboard() {
     const end = new Date(campaign.end_date);
 
     if (!campaign.is_active) {
-      return { label: 'Paused', style: 'border-neutral-500/20 bg-neutral-500/10 text-neutral-400' };
+      return { label: 'Paused', style: 'text-neutral-300 ring-neutral-500/30', dot: 'bg-neutral-400' };
     }
     if (now < start) {
-      return { label: 'Scheduled', style: 'border-amber-500/20 bg-amber-500/10 text-amber-400' };
+      return { label: 'Scheduled', style: 'text-amber-300 ring-amber-500/30', dot: 'bg-amber-400' };
     }
     if (now > end) {
-      return { label: 'Expired', style: 'border-rose-500/20 bg-rose-500/10 text-rose-400' };
+      return { label: 'Expired', style: 'text-rose-300 ring-rose-500/30', dot: 'bg-rose-400' };
     }
-    return { label: 'Active', style: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' };
+    return { label: 'Active', style: 'text-emerald-300 ring-emerald-500/30', dot: 'bg-emerald-400' };
   };
 
   if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-purple-500/30 border-t-purple-500 animate-spin"></div>
-        <p className="text-sm font-semibold tracking-wide text-purple-300">Loading your profile session...</p>
+        <div className="w-10 h-10 rounded-full border-[3px] border-purple-500/25 border-t-purple-400 animate-spin"></div>
+        <p className="text-sm text-neutral-400">Loading your session…</p>
       </div>
     );
   }
 
-  // Lockscreen for unauthenticated users (Upgraded with Dev Mode bypass for offline testing)
+  // Lockscreen for unauthenticated users (with Dev Mode bypass for offline testing)
   if (!user) {
     return (
-      <div className="flex flex-col min-h-screen bg-background text-foreground selection:bg-purple-500/30 selection:text-white">
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
         <DashboardHeader />
 
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center justify-center">
-          <Card className="max-w-md w-full p-6 sm:p-8 rounded-3xl flex flex-col items-center text-center gap-6 border border-white/5 shadow-2xl">
-            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-xl shadow-purple-500/5">
-              <Lock className="w-6 h-6 animate-pulse" />
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center justify-center">
+          <Card className="max-w-md w-full p-6 sm:p-8 rounded-2xl flex flex-col items-center text-center gap-6 animate-slide-up">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 ring-1 ring-inset ring-purple-500/25 flex items-center justify-center text-purple-300">
+              <Lock className="w-5 h-5" />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">Access Locked</h1>
-              <CardDescription className="text-neutral-400 text-xs leading-relaxed max-w-xs mx-auto">
-                The organiser dashboard is protected. Please sign in to manage campaigns and view active metrics.
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-semibold text-white tracking-tight">Access Locked</h1>
+              <CardDescription className="max-w-xs mx-auto">
+                The organiser dashboard is protected. Sign in to manage campaigns and view metrics.
               </CardDescription>
             </div>
             
             {/* Info Box explaining offline behavior */}
-            <div className="p-3.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-300 text-xxs flex gap-2.5 items-start">
-              <Terminal className="w-4 h-4 shrink-0 mt-0.5 text-purple-400" />
-              <div className="flex flex-col gap-0.5 leading-relaxed text-left">
-                <span className="font-bold text-white">Local Testing Info</span>
-                <span>Standard Google Sign-In requires an active local Supabase stack emulator running via Docker. For offline testing, use the bypass option below.</span>
+            <div className="w-full p-4 rounded-xl border border-purple-500/20 bg-purple-500/[0.06] flex gap-3 items-start text-left">
+              <Terminal className="w-4 h-4 shrink-0 mt-0.5 text-purple-300" />
+              <div className="flex flex-col gap-1 leading-relaxed">
+                <span className="text-sm font-medium text-white">Local testing</span>
+                <span className="text-xs text-neutral-400">Google Sign-In needs a local Supabase stack running in Docker. For offline testing, use the bypass option below.</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 w-full">
-              {/* Option 1: Developer Bypass (Sandbox) */}
-              <Button 
-                onClick={signInWithDevMode}
-                variant="outline"
-                className="w-full py-6 rounded-xl font-bold border border-purple-500/30 hover:border-purple-500 bg-purple-500/10 hover:bg-purple-500/15 text-purple-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] group shadow-lg shadow-purple-500/5"
-              >
-                <Terminal className="w-4.5 h-4.5 group-hover:animate-pulse text-purple-400" />
+              <Button onClick={signInWithDevMode} variant="accent" size="lg" className="w-full">
+                <Terminal className="w-4 h-4" />
                 <span>Developer Bypass (Offline Sandbox)</span>
               </Button>
 
-              {/* Option 2: Google OAuth */}
-              <Button 
-                onClick={signInWithGoogle}
-                variant="secondary"
-                className="w-full py-6 rounded-xl font-bold bg-white text-black hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-white/5"
-              >
-                {/* Simulated Google Logo (Colored circles) */}
-                <span className="flex items-center gap-1 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                </span>
+              <Button onClick={signInWithGoogle} variant="light" size="lg" className="w-full">
+                <GoogleIcon />
                 <span>Sign In with Google</span>
               </Button>
             </div>
             
-            <p className="text-[9px] text-neutral-500 leading-relaxed max-w-xs">
-              Organizer accounts are isolated securely. Standard OAuth registers profile records into local Supabase users schemas automatically.
+            <p className="text-xs text-neutral-500 leading-relaxed max-w-xs">
+              Organiser accounts are isolated securely. Google sign-in registers your profile in Supabase automatically.
             </p>
           </Card>
         </main>
@@ -364,23 +353,27 @@ export default function Dashboard() {
     );
   }
 
+  const overview = [
+    { label: 'Active Campaigns', value: stats.activeCount, suffix: `/ ${campaigns.length} total`, icon: Sparkles, tone: 'text-purple-300 bg-purple-500/10' },
+    { label: 'Total Views', value: stats.totalViews.toLocaleString(), icon: Eye, tone: 'text-sky-300 bg-sky-500/10' },
+    { label: 'Total Downloads', value: stats.totalDownloads.toLocaleString(), icon: Download, tone: 'text-emerald-300 bg-emerald-500/10' },
+    { label: 'Conversion Rate', value: `${stats.overallConversion}%`, icon: TrendingUp, tone: 'text-pink-300 bg-pink-500/10' },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <DashboardHeader />
 
-      <main className="flex-1 w-full py-10">
-        <PageContainer className="flex flex-col gap-10">
+      <main className="flex-1 w-full py-8 sm:py-12">
+        <PageContainer className="flex flex-col gap-8 sm:gap-10">
         
-        {/* Banner Section */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-white/5 pb-8">
-          <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">Organiser Dashboard</h1>
-            <p className="text-neutral-400 text-sm mt-1">Manage frames, schedule windows, and view dynamic participant analytics.</p>
+        {/* Page heading */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-5">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">Organiser Dashboard</h1>
+            <p className="text-neutral-400 text-sm">Manage frames, schedule campaigns and track participant analytics.</p>
           </div>
-          <Button 
-            onClick={() => setIsCreatorOpen(true)}
-            className="px-5 py-3 rounded-xl font-bold flex items-center gap-2 text-sm hover:scale-[1.01]"
-          >
+          <Button onClick={() => setIsCreatorOpen(true)} className="w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Create Campaign
           </Button>
@@ -388,200 +381,184 @@ export default function Dashboard() {
 
         {/* Aggregated Overview Cards */}
         {campaigns.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="p-6 rounded-2xl flex flex-col gap-2 border border-white/5">
-              <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Active Campaigns</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white">{stats.activeCount}</span>
-                <span className="text-xs text-neutral-400 font-medium">/ {campaigns.length} total</span>
-              </div>
-            </Card>
-            <Card className="p-6 rounded-2xl flex flex-col gap-2 border border-white/5">
-              <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Total Views</span>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-purple-400">{stats.totalViews.toLocaleString()}</span>
-                <Eye className="w-5 h-5 text-neutral-600" />
-              </div>
-            </Card>
-            <Card className="p-6 rounded-2xl flex flex-col gap-2 border border-white/5">
-              <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Total Downloads</span>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-emerald-400">{stats.totalDownloads.toLocaleString()}</span>
-                <Download className="w-5 h-5 text-neutral-600" />
-              </div>
-            </Card>
-            <Card className="p-6 rounded-2xl flex flex-col gap-2 border border-white/5">
-              <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Conversion Rate</span>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-pink-400">{stats.overallConversion}%</span>
-                <TrendingUp className="w-5 h-5 text-neutral-600" />
-              </div>
-            </Card>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {overview.map(({ label, value, suffix, icon: Icon, tone }) => (
+              <Card key={label} className="p-4 sm:p-5 flex flex-col gap-3 sm:gap-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="eyebrow truncate">{label}</span>
+                  <span className={`hidden sm:flex w-8 h-8 rounded-lg items-center justify-center ${tone}`}>
+                    <Icon className="w-4 h-4" />
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-semibold tracking-tight text-white tabular-nums">{value}</span>
+                  {suffix && <span className="text-xs text-neutral-500">{suffix}</span>}
+                </div>
+              </Card>
+            ))}
           </div>
         )}
 
         {/* Campaigns Listing Grid */}
-        <div>
-          <h2 className="text-lg font-bold text-neutral-300 mb-6 flex items-center gap-2">
+        <section className="flex flex-col gap-5">
+          <h2 className="text-base font-semibold text-white flex items-center gap-2">
             <span>Your Campaigns</span>
-            <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs font-mono font-medium text-neutral-400">
+            <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-md bg-white/[0.06] text-xs font-medium text-neutral-400 tabular-nums">
               {campaigns.length}
             </span>
           </h2>
 
           {loadingCampaigns ? (
             <div className="w-full py-20 flex flex-col items-center justify-center gap-4">
-              <div className="w-10 h-10 rounded-full border-3 border-purple-500/20 border-t-purple-500 animate-spin"></div>
-              <p className="text-xs text-neutral-500 font-semibold tracking-wide">Loading campaigns list...</p>
+              <div className="w-8 h-8 rounded-full border-[3px] border-purple-500/20 border-t-purple-400 animate-spin"></div>
+              <p className="text-sm text-neutral-500">Loading campaigns…</p>
             </div>
           ) : campaigns.length === 0 ? (
             /* Empty State */
-            <Card className="w-full py-20 px-8 rounded-3xl flex flex-col items-center justify-center text-center gap-6 border-dashed border-white/10 hover:border-purple-500/30">
-              <div className="w-16 h-16 rounded-2xl bg-purple-500/5 border border-purple-500/10 flex items-center justify-center text-purple-400/60">
-                <Sparkles className="w-8 h-8 animate-pulse" />
+            <Card className="w-full py-16 sm:py-20 px-6 sm:px-8 flex flex-col items-center justify-center text-center gap-6 border-dashed border-white/10">
+              <div className="w-14 h-14 rounded-2xl bg-purple-500/10 ring-1 ring-inset ring-purple-500/20 flex items-center justify-center text-purple-300">
+                <Sparkles className="w-6 h-6" />
               </div>
-              <div className="flex flex-col gap-1 max-w-sm">
-                <CardTitle className="text-lg font-bold text-white">No campaigns yet</CardTitle>
-                <CardDescription className="text-neutral-500 text-sm leading-relaxed">
-                  Start sharing your branded frame campaigns in under 5 minutes. No sign-up required for participants!
+              <div className="flex flex-col gap-2 max-w-sm">
+                <CardTitle className="text-lg">No campaigns yet</CardTitle>
+                <CardDescription>
+                  Launch your first branded frame campaign in under 5 minutes. Participants don&apos;t need to sign up.
                 </CardDescription>
               </div>
-              <Button 
-                onClick={() => setIsCreatorOpen(true)}
-                className="px-6 py-3 rounded-xl font-bold text-sm"
-              >
+              <Button onClick={() => setIsCreatorOpen(true)}>
+                <Plus className="w-4 h-4" />
                 Create Your First Campaign
               </Button>
             </Card>
           ) : (
             /* Card Grid */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {campaigns.map(campaign => {
                 const status = getCampaignStatus(campaign);
+                const isCopied = copiedSlug === campaign.slug;
                 return (
-                  <Card key={campaign.id} className="rounded-2xl p-6 border border-white/5 hover:border-white/10 flex flex-col gap-5">
-                    
-                    {/* Top Row: Title and Visibility status */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="truncate flex-1">
-                        <h3 className="font-bold text-white text-base truncate" title={campaign.title}>
-                          {campaign.title}
-                        </h3>
-                        <p className="text-neutral-500 text-xxs font-mono mt-0.5 select-all">
-                          /c/{campaign.slug}
-                        </p>
-                      </div>
-                      
-                      {/* Status Badges */}
-                      <div className="flex gap-1.5 shrink-0">
-                        <span className={`px-2 py-0.5 rounded-full text-xxs font-semibold border ${status.style}`}>
-                          {status.label}
-                        </span>
-                        <span className={`px-1.5 py-0.5 rounded-full text-xxs border ${campaign.is_public ? 'border-purple-500/20 bg-purple-500/5 text-purple-400' : 'border-neutral-700 bg-neutral-800 text-neutral-500'}`} title={campaign.is_public ? 'Public Profile Visibility Enabled' : 'Private'}>
-                          {campaign.is_public ? <Unlock className="w-3 h-3 text-purple-400" /> : <Lock className="w-3 h-3" />}
-                        </span>
-                      </div>
-                    </div>
+                  <Card key={campaign.id} className="card-hover overflow-hidden flex flex-col">
 
                     {/* Frame Visual Preview thumbnail */}
-                    <div className="relative w-full h-40 overflow-hidden rounded-xl border border-white/5 bg-neutral-950 flex items-center justify-center p-2 hover:bg-neutral-900 transition-all duration-300">
+                    <div className="relative w-full aspect-[16/10] bg-neutral-950 border-b border-white/[0.06] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:16px_16px]">
                       <img 
                         src={campaign.frame_url} 
                         alt="PNG Overlay Frame Preview" 
-                        className="max-h-full max-w-full object-contain pointer-events-none p-2"
+                        className="max-h-full max-w-full object-contain pointer-events-none p-4"
                         onError={(e) => { e.target.src = '/favicon.ico'; }}
                       />
-                    </div>
 
-                    {/* Details Row: Calendar Expiry and stats */}
-                    <div className="grid grid-cols-3 gap-3 border-y border-white/5 py-3 text-center text-xs">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-neutral-500 font-bold uppercase tracking-wider text-[9px]">Views</span>
-                        <span className="font-bold text-white">{campaign.stats?.views || 0}</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-neutral-500 font-bold uppercase tracking-wider text-[9px]">Downloads</span>
-                        <span className="font-bold text-white">{campaign.stats?.downloads || 0}</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-neutral-500 font-bold uppercase tracking-wider text-[9px]">Ends</span>
-                        <span className="font-medium text-neutral-400 text-[10px] truncate" title={new Date(campaign.end_date).toLocaleDateString()}>
-                          {new Date(campaign.end_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+                      {/* Status Badges */}
+                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                        <span className={`inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-xxs font-medium ring-1 ring-inset bg-black/70 backdrop-blur ${status.style}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`}></span>
+                          {status.label}
+                        </span>
+                        <span
+                          className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-xxs font-medium ring-1 ring-inset ring-white/10 bg-black/70 backdrop-blur text-neutral-300"
+                          title={campaign.is_public ? 'Public Profile Visibility Enabled' : 'Private'}
+                        >
+                          {campaign.is_public ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                          {campaign.is_public ? 'Public' : 'Private'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Actions and analytics shortcuts */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 mt-1 pt-2 border-t border-white/5">
-                      <div className="flex items-center gap-1.5">
-                        {/* Copy Link Button */}
-                        <Button 
-                          onClick={() => handleCopyLink(campaign.slug)}
-                          title="Copy Shareable Link"
-                          variant="ghost"
-                          size="icon"
-                          className="w-8 h-8 rounded-xl border border-white/5 hover:border-white/10 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </Button>
-                        
-                        {/* Go to Live Campaign Page */}
-                        <a 
-                          href={`/c/${campaign.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="View Live Campaign Page"
-                          className="inline-flex items-center justify-center w-8 h-8 border border-white/5 hover:border-white/10 bg-white/5 hover:bg-white/10 rounded-xl text-neutral-300 hover:text-white transition-all cursor-pointer"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-
-                        {/* Toggle Active state Button */}
-                        <Button 
-                          onClick={() => handleToggleActive(campaign)}
-                          title={campaign.is_active ? 'Pause Campaign' : 'Resume Campaign'}
-                          variant="ghost"
-                          size="icon"
-                          className="w-8 h-8 rounded-xl border border-white/5 hover:border-white/10 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
-                        >
-                          {campaign.is_active ? (
-                            <ToggleRight className="w-3.5 h-3.5 text-emerald-400" />
-                          ) : (
-                            <ToggleLeft className="w-3.5 h-3.5 text-neutral-500" />
-                          )}
-                        </Button>
+                    <div className="p-5 flex flex-col gap-4 flex-1">
+                      {/* Title and slug */}
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-white text-base truncate" title={campaign.title}>
+                          {campaign.title}
+                        </h3>
+                        <p className="text-neutral-500 text-xs font-mono mt-1 truncate select-all">
+                          /c/{campaign.slug}
+                        </p>
                       </div>
 
-                      <div className="flex items-center gap-1.5 ml-auto">
-                        {/* View Detailed Analytics Dashboard */}
+                      {/* Stats row */}
+                      <dl className="grid grid-cols-3 rounded-xl bg-white/[0.03] ring-1 ring-inset ring-white/[0.06] divide-x divide-white/[0.06]">
+                        <div className="px-3 py-2.5">
+                          <dt className="eyebrow text-neutral-500">Views</dt>
+                          <dd className="mt-0.5 text-sm font-semibold text-white tabular-nums">{(campaign.stats?.views || 0).toLocaleString()}</dd>
+                        </div>
+                        <div className="px-3 py-2.5">
+                          <dt className="eyebrow text-neutral-500">Downloads</dt>
+                          <dd className="mt-0.5 text-sm font-semibold text-white tabular-nums">{(campaign.stats?.downloads || 0).toLocaleString()}</dd>
+                        </div>
+                        <div className="px-3 py-2.5">
+                          <dt className="eyebrow text-neutral-500">Ends</dt>
+                          <dd className="mt-0.5 text-sm font-medium text-neutral-300 truncate" title={new Date(campaign.end_date).toLocaleDateString()}>
+                            {new Date(campaign.end_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between gap-2 mt-auto pt-1">
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            onClick={() => handleCopyLink(campaign.slug)}
+                            title="Copy Shareable Link"
+                            aria-label="Copy shareable link"
+                            variant="ghost"
+                            size="icon-sm"
+                          >
+                            {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          </Button>
+                          
+                          <a 
+                            href={`/c/${campaign.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="View Live Campaign Page"
+                            aria-label="View live campaign page"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-all"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+
+                          <Button 
+                            onClick={() => handleToggleActive(campaign)}
+                            title={campaign.is_active ? 'Pause Campaign' : 'Resume Campaign'}
+                            aria-label={campaign.is_active ? 'Pause campaign' : 'Resume campaign'}
+                            variant="ghost"
+                            size="icon-sm"
+                          >
+                            {campaign.is_active ? (
+                              <ToggleRight className="w-4 h-4 text-emerald-400" />
+                            ) : (
+                              <ToggleLeft className="w-4 h-4" />
+                            )}
+                          </Button>
+
+                          <Button 
+                            onClick={() => setEditingCampaign(campaign)}
+                            title="Edit Campaign"
+                            aria-label="Edit campaign"
+                            variant="ghost"
+                            size="icon-sm"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+
+                          <Button 
+                            onClick={() => handleDeleteCampaign(campaign.id)}
+                            title="Delete Campaign"
+                            aria-label="Delete campaign"
+                            variant="ghost-danger"
+                            size="icon-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+
                         <Button 
                           onClick={() => router.push(`/dashboard/campaign/${campaign.id}`)}
-                          className="px-3 py-1.5 border border-purple-500/20 hover:border-purple-500 bg-purple-500/10 text-purple-300 rounded-xl text-xxs font-bold flex items-center gap-1 hover:scale-[1.02]"
+                          variant="secondary"
+                          size="sm"
                         >
-                          <BarChart3 className="w-3 h-3" />
+                          <BarChart3 className="w-3.5 h-3.5" />
                           <span>Analytics</span>
-                        </Button>
-
-                        {/* Edit Button */}
-                        <Button 
-                          onClick={() => setEditingCampaign(campaign)}
-                          title="Edit Campaign"
-                          variant="ghost"
-                          size="icon"
-                          className="w-8 h-8 border border-purple-500/10 hover:border-purple-500 bg-purple-500/5 hover:bg-purple-500/10 rounded-xl text-purple-400 hover:text-purple-300"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-
-                        {/* Delete Button */}
-                        <Button 
-                          onClick={() => handleDeleteCampaign(campaign.id)}
-                          title="Delete Campaign"
-                          variant="ghost"
-                          size="icon"
-                          className="w-8 h-8 border border-rose-500/10 hover:border-rose-500 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </div>
@@ -591,7 +568,7 @@ export default function Dashboard() {
               })}
             </div>
           )}
-        </div>
+        </section>
         </PageContainer>
       </main>
 
